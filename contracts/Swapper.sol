@@ -40,7 +40,7 @@ contract Swapper is ReentrancyGuard {
 
         require(balanceOf >= amount, "Swapper: insufficient balance");
         uint256 allowance = IERC20(token_).allowance(msg.sender, address(this));
-        require(allowance >= amount, "Tokens not approved");
+        require(allowance >= amount, "Swapper: Tokens not approved");
 
         IERC20(token_).transferFrom(msg.sender, address(this), amount);
         bool sent = fanToken.mint(msg.sender, amount);
@@ -60,10 +60,11 @@ contract Swapper is ReentrancyGuard {
         uint256 balanceOf = fanToken.balanceOf(msg.sender);
 
         require(balanceOf >= amount, "Swapper: insufficient balance");
-
+        uint256 allowance = fanToken.allowance(msg.sender, address(this));
+        require(allowance >= amount, "Swapper: insufficient allowance");
+        IERC20(token_).approve(address(msg.sender), amount);
         IERC20(fanToken).transferFrom(msg.sender, address(this), amount);
-
-        IERC20(token_).transferFrom(token_, msg.sender, amount);
+        IERC20(token_).transferFrom(address(this), msg.sender, amount);
     }
 
     /**
