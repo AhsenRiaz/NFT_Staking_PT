@@ -12,6 +12,7 @@ contract StakingSystem is Ownable, IERC721Receiver {
     IERC721Enumerable public nft;
     IRewardToken public rewardToken;
 
+    // total nft staked
     uint256 public totalStaked;
 
     struct Staker {
@@ -21,27 +22,28 @@ contract StakingSystem is Ownable, IERC721Receiver {
         address owner;
     }
 
-    /// @notice mapping of a staker to its wallet
+    // mapping of a staker to its wallet
     mapping(address => Staker) public stakers;
 
-    /// @notice mapping of tokenId to owner
+    // mapping of tokenId to owner
     mapping(uint256 => address) public tokenOwner;
 
-    /// @notice mapping of tokenId to stakedTime
+    // mapping of tokenId to stakedTime
     mapping(uint256 => uint256) public tokenIdStakedAt;
 
-    /// @notice mapping of tokenId to StakingStatus
+    // mapping of tokenId to StakingStatus
     mapping(uint => bool) public nftStatus;
 
+    // event emitted when a user has staked a nft
     event Staked(address owner, uint256 amount);
 
-    /// @notice event emitted when a user has unstaked a nft
+    // event emitted when a user has unstaked a nft
     event Unstaked(address owner, uint256 amount);
 
-    /// @notice event emitted when a user claims reward
+    // event emitted when a user claims reward
     event RewardPaid(address indexed user, uint256 reward);
 
-    /// @notice Allows reward tokens to be claimed
+    // Allows reward tokens to be claimed
     event ClaimableStatusUpdated(bool status);
 
     modifier isValidAddress() {
