@@ -16,10 +16,9 @@ describe("NounsToken Contract", function () {
   let rewardToken: RewardToken;
   let owner: SignerWithAddress;
   let addr1: SignerWithAddress;
-  let addr2: SignerWithAddress;
 
   beforeEach(async () => {
-    [owner, addr1, addr2] = await ethers.getSigners();
+    [owner, addr1] = await ethers.getSigners();
 
     let randomApeFactory = (await ethers.getContractFactory(
       "RandomApe",
@@ -33,7 +32,7 @@ describe("NounsToken Contract", function () {
   });
 
   beforeEach(async () => {
-    [owner, addr1, addr2] = await ethers.getSigners();
+    [owner, addr1] = await ethers.getSigners();
 
     let rewardTokenFactory = (await ethers.getContractFactory(
       "RewardToken",
@@ -47,7 +46,7 @@ describe("NounsToken Contract", function () {
   });
 
   beforeEach(async () => {
-    [owner, addr1, addr2] = await ethers.getSigners();
+    [owner, addr1] = await ethers.getSigners();
 
     let stakingSystemFactory = (await ethers.getContractFactory(
       "StakingSystem",
