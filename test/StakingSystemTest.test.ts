@@ -1,25 +1,25 @@
 import { expect, assert } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-
 import {
-  RandomApe,
   StakingSystem,
-  RewardToken,
-  RandomApe__factory,
   StakingSystem__factory,
+  RandomApe,
+  RandomApe__factory,
+  RewardToken,
   RewardToken__factory,
 } from "../typechain-types";
 
-describe("Staking Contract", function () {
+describe("NounsToken Contract", function () {
   let stakingSystem: StakingSystem;
   let randomApe: RandomApe;
   let rewardToken: RewardToken;
   let owner: SignerWithAddress;
   let addr1: SignerWithAddress;
+  let addr2: SignerWithAddress;
 
   beforeEach(async () => {
-    [owner, addr1] = await ethers.getSigners();
+    [owner, addr1, addr2] = await ethers.getSigners();
 
     let randomApeFactory = (await ethers.getContractFactory(
       "RandomApe",
@@ -33,7 +33,7 @@ describe("Staking Contract", function () {
   });
 
   beforeEach(async () => {
-    [owner, addr1] = await ethers.getSigners();
+    [owner, addr1, addr2] = await ethers.getSigners();
 
     let rewardTokenFactory = (await ethers.getContractFactory(
       "RewardToken",
@@ -47,7 +47,7 @@ describe("Staking Contract", function () {
   });
 
   beforeEach(async () => {
-    [owner, addr1] = await ethers.getSigners();
+    [owner, addr1, addr2] = await ethers.getSigners();
 
     let stakingSystemFactory = (await ethers.getContractFactory(
       "StakingSystem",
@@ -77,56 +77,43 @@ describe("Staking Contract", function () {
     });
   });
 
-  describe("Stake  NFT", () => {
+  describe("Stake NFT", () => {
     it("should be able to stake a single NFT", async () => {
       await randomApe.mint(addr1.address, "5");
       let balanceOf = await randomApe.balanceOf(addr1.address);
       expect(balanceOf).to.be.equal("5");
-
       let ownerOf = await randomApe.ownerOf("1");
       expect(ownerOf).to.be.equal(addr1.address);
-
       await randomApe.connect(addr1).approve(stakingSystem.address, "1");
 
-      await stakingSystem.connect(addr1).stake("1");
+      await stakingSystem.connect(addr1).stake(["1"]);
+      let balanceOfStakingSystem = await (
+        await randomApe.balanceOf(stakingSystem.address)
+      ).toString();
 
-      let isStaked = await stakingSystem.nftStatus("1");
-      expect(isStaked).to.be.equal(true);
-
-      let tokenOwner = await stakingSystem.tokenOwner("1");
-      expect(tokenOwner).to.be.equal(addr1.address);
-
-      let totalStaked = await stakingSystem.totalStaked();
-      expect(totalStaked).to.be.equal("1");
+      expect(balanceOfStakingSystem).to.be.equal("1");
+      console.log("balanceOf", balanceOfStakingSystem);
     });
   });
 
   describe("Stake Multiple NFTs", () => {
     it("should be able to stake multiple NFTs", async () => {
-      let tokenIds = ["1", "2", "3"];
       await randomApe.mint(addr1.address, "5");
       let balanceOf = await randomApe.balanceOf(addr1.address);
       expect(balanceOf).to.be.equal("5");
-
       let ownerOf = await randomApe.ownerOf("1");
       expect(ownerOf).to.be.equal(addr1.address);
-
       await randomApe
         .connect(addr1)
         .setApprovalForAll(stakingSystem.address, true);
 
-      await stakingSystem.connect(addr1).stakeBatch(tokenIds);
+      await stakingSystem.connect(addr1).stake(["1", "2", "3"]);
+      let balanceOfStakingSystem = (
+        await randomApe.balanceOf(stakingSystem.address)
+      ).toString();
 
-      for (var i = 0; i < tokenIds.length; i++) {
-        let isStaked = await stakingSystem.nftStatus(tokenIds[i]);
-        expect(isStaked).to.be.equal(true);
-
-        let tokenOwner = await stakingSystem.tokenOwner(tokenIds[i]);
-        expect(tokenOwner).to.be.equal(addr1.address);
-      }
-
-      let totalStaked = await stakingSystem.totalStaked();
-      expect(totalStaked).to.be.equal("3");
+      expect(balanceOfStakingSystem).to.be.equal("3");
+      console.log("balanceOf", balanceOfStakingSystem);
     });
   });
 
@@ -135,89 +122,21 @@ describe("Staking Contract", function () {
       await randomApe.mint(addr1.address, "5");
       let balanceOf = await randomApe.balanceOf(addr1.address);
       expect(balanceOf).to.be.equal("5");
-
       let ownerOf = await randomApe.ownerOf("1");
       expect(ownerOf).to.be.equal(addr1.address);
-
-      await randomApe.connect(addr1).approve(stakingSystem.address, "1");
-
-      await stakingSystem.connect(addr1).stake("1");
-
-      let stakedTokensBefore = await stakingSystem.getStakedTokens(
-        addr1.address
-      );
-      console.log("stakedTokens", stakedTokensBefore);
-
-      let isStakedBefore = await stakingSystem.nftStatus("1");
-      expect(isStakedBefore).to.be.equal(true);
-
-      let tokenOwner = await stakingSystem.tokenOwner("1");
-      expect(tokenOwner).to.be.equal(addr1.address);
-
-      let totalStaked = await stakingSystem.totalStaked();
-      expect(totalStaked).to.be.equal("1");
-
-      await stakingSystem.connect(addr1).unstake("1");
-      let isStakedAfter = await stakingSystem.nftStatus("1");
-      expect(isStakedAfter).to.be.equal(false);
-
-      let stakedTokensAfter = await stakingSystem.getStakedTokens(
-        addr1.address
-      );
-
-      console.log("stakedTokens", stakedTokensAfter);
-    });
-  });
-
-  describe("Unstake multiple staked NFTs ", () => {
-    it("should be able to unstake multiple staked nfts", async () => {
-      let stakeIds = ["1", "2", "3"];
-      let unstakeIds = ["1", "2"];
-      await randomApe.mint(addr1.address, "5");
-      let balanceOf = await randomApe.balanceOf(addr1.address);
-      expect(balanceOf).to.be.equal("5");
-
-      let ownerOf = await randomApe.ownerOf("1");
-      expect(ownerOf).to.be.equal(addr1.address);
-
       await randomApe
         .connect(addr1)
         .setApprovalForAll(stakingSystem.address, true);
 
-      await stakingSystem.connect(addr1).stakeBatch(stakeIds);
+      await stakingSystem.connect(addr1).stake(["1", "2", "3"]);
+      let beforeBalanceOfStakingSystem = (
+        await randomApe.balanceOf(stakingSystem.address)
+      ).toString();
 
-      let stakedTokensBefore = await stakingSystem.getStakedTokens(
-        addr1.address
-      );
-      console.log("stakedTokensBefore", stakedTokensBefore);
+      expect(beforeBalanceOfStakingSystem).to.be.equal("3");
+      console.log("balanceOf", beforeBalanceOfStakingSystem);
 
-      for (var i = 0; i < stakeIds.length; i++) {
-        let isStaked = await stakingSystem.nftStatus(stakeIds[i]);
-        expect(isStaked).to.be.equal(true);
-
-        let tokenOwner = await stakingSystem.tokenOwner(stakeIds[i]);
-        expect(tokenOwner).to.be.equal(addr1.address);
-      }
-
-      let totalStaked = await stakingSystem.totalStaked();
-      expect(totalStaked).to.be.equal(stakeIds.length);
-
-      await stakingSystem.connect(addr1).unstakeBatch(unstakeIds);
-
-      for (var i = 0; i < unstakeIds.length; i++) {
-        let isStaked = await stakingSystem.nftStatus(unstakeIds[i]);
-        expect(isStaked).to.be.equal(false);
-
-        let tokenOwner = await stakingSystem.tokenOwner(unstakeIds[i]);
-        expect(tokenOwner).to.be.equal(
-          "0x0000000000000000000000000000000000000000"
-        );
-      }
-
-      let stakedTokensAfter = await stakingSystem.getStakedTokens(
-        addr1.address
-      );
-      console.log("stakedTokensAfter", stakedTokensAfter);
+      await stakingSystem.connect(addr1).unstake(["1", "2", "3"]);
     });
   });
 });
