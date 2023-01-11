@@ -2,13 +2,14 @@
 pragma solidity 0.8.12;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/interfaces/IERC721Receiver.sol";
 import "@openzeppelin/contracts/interfaces/IERC721Enumerable.sol";
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "./IRewardToken.sol";
 
-contract StakingSystem is Ownable, IERC721Receiver {
+contract StakingSystem is IERC721Receiver, Ownable, ReentrancyGuard {
     IERC721Enumerable public nft;
     IRewardToken public rewardToken;
 
@@ -36,15 +37,15 @@ contract StakingSystem is Ownable, IERC721Receiver {
         rewardToken = _rewardToken;
     }
 
-    function stake(uint256[] calldata tokenIds) external {
+    function stake(uint256[] calldata tokenIds) external nonReentrant {
         _stake(msg.sender, tokenIds);
     }
 
-    function unstake(uint256[] calldata tokenIds) external {
+    function unstake(uint256[] calldata tokenIds) external nonReentrant {
         _unstake(msg.sender, tokenIds);
     }
 
-    function claim(uint256[] calldata tokenIds) external {
+    function claim(uint256[] calldata tokenIds) external nonReentrant {
         _claim(msg.sender, tokenIds);
     }
 
@@ -72,19 +73,23 @@ contract StakingSystem is Ownable, IERC721Receiver {
                 vaults[tokenId].tokenId == 0,
                 "StakingSystem: Already Staked"
             );
-            nftStatus[tokenId] = true;
 
             Stake storage vault = vaults[tokenId];
             vault.owner = account;
             vault.tokenId = tokenId;
             vault.stakedAt = block.timestamp;
 
-            nft.transferFrom(account, address(this), tokenId);
+            nftStatus[tokenId] = true;
+
+            nft.safeTransferFrom(account, address(this), tokenId);
             emit Staked(account, tokenId, block.timestamp);
         }
     }
 
-    function _unstake(address account, uint256[] calldata tokenIds) internal {
+    function _unstake(
+        address account,
+        uint256[] calldata tokenIds
+    ) internal nonReentrant {
         uint256 tokenId;
         totalStaked -= tokenIds.length;
         for (uint i = 0; i < tokenIds.length; i++) {
@@ -93,12 +98,15 @@ contract StakingSystem is Ownable, IERC721Receiver {
             require(staked.owner == msg.sender, "not an owner");
 
             delete vaults[tokenId];
-            emit Unstaked(account, tokenId, block.timestamp);
             nft.transferFrom(address(this), account, tokenId);
+            emit Unstaked(account, tokenId, block.timestamp);
         }
     }
 
-    function _claim(address account, uint256[] calldata tokenIds) internal {
+    function _claim(
+        address account,
+        uint256[] calldata tokenIds
+    ) internal nonReentrant {
         uint256 tokenId;
         uint256 earned = 0;
 
@@ -112,6 +120,7 @@ contract StakingSystem is Ownable, IERC721Receiver {
             vault.owner = account;
             vault.tokenId = tokenId;
             vault.stakedAt = block.timestamp;
+            staked.released = staked.released + earned;
         }
         if (earned > 0) {
             rewardToken.mint(account, earned);
