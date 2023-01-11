@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT LICENSE
-pragma solidity 0.8.12;
+pragma solidity ^0.8.12;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/interfaces/IERC721Receiver.sol";
 import "@openzeppelin/contracts/interfaces/IERC721Enumerable.sol";
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
-import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "./IRewardToken.sol";
 
-contract StakingSystem is Ownable, IERC721Receiver {
+contract StakingSystem is IERC721Receiver, Ownable, ReentrancyGuard {
     IERC721Enumerable public nft;
     IRewardToken public rewardToken;
 
@@ -104,6 +104,12 @@ contract StakingSystem is Ownable, IERC721Receiver {
         }
     }
 
+    function getStakedTokens(
+        address _user
+    ) public view returns (uint256[] memory tokenIds) {
+        return stakers[_user].tokenIds;
+    }
+
     function calculateAndClaimRewards(address account) internal {
         Staker storage staker = stakers[account];
         uint balance = staker.balance;
@@ -156,6 +162,7 @@ contract StakingSystem is Ownable, IERC721Receiver {
             staker.tokenIds.pop();
         }
         delete tokenOwner[_tokenId];
+        delete nftStatus[_tokenId];
 
         nft.safeTransferFrom(address(this), _user, _tokenId);
 

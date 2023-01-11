@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract RewardToken is ERC20, Ownable {
-    mapping(address => uint256) private _balances;
+    mapping(address => uint256) private balances;
     mapping(address => bool) controllers;
 
-    uint256 private _totalSupply;
-    uint256 private MAXSUP;
-    uint256 constant MAXIMUMSUPPLY = 1000000 * 10 ** 18;
+    uint256 constant MAXIMUM_SUPPLY = 1000000 * 1e18;
 
     constructor(
         string memory _name,
@@ -21,8 +19,7 @@ contract RewardToken is ERC20, Ownable {
 
     function mint(address to, uint256 amount) external {
         require(controllers[msg.sender], "Only controllers can mint");
-        _totalSupply = _totalSupply + amount;
-        _balances[to] = _balances[to] + amount;
+        balances[to] = balances[to] + amount;
         _mint(to, amount);
     }
 
@@ -34,11 +31,8 @@ contract RewardToken is ERC20, Ownable {
         controllers[controller] = false;
     }
 
-    function totalSupply() public view override returns (uint256) {
-        return _totalSupply;
-    }
-
     function maxSupply() public pure returns (uint256) {
-        return MAXIMUMSUPPLY;
+        return MAXIMUM_SUPPLY;
     }
+    
 }

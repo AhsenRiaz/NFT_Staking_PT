@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 // internal one used memory for function's paremeters
 // external one uses calldata for functions's parameters
-pragma solidity 0.8.12;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
