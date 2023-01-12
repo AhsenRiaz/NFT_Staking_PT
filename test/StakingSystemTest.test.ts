@@ -84,10 +84,12 @@ describe("NounsToken Contract", function () {
       expect(balanceOf).to.be.equal("5");
       let ownerOf = await randomApe.ownerOf("1");
       expect(ownerOf).to.be.equal(addr1.address);
-      await randomApe.connect(addr1).approve(stakingSystem.address, "1");
+      await randomApe
+        .connect(addr1)
+        .setApprovalForAll(stakingSystem.address, true);
 
       await stakingSystem.connect(addr1).stake(["1"]);
-      let balanceOfStakingSystem = await (
+      let balanceOfStakingSystem = (
         await randomApe.balanceOf(stakingSystem.address)
       ).toString();
 
@@ -98,6 +100,7 @@ describe("NounsToken Contract", function () {
 
   describe("Stake Multiple NFTs", () => {
     it("should be able to stake multiple NFTs", async () => {
+      let stakeTokenIds = ["1", "2", "3"];
       await randomApe.mint(addr1.address, "5");
       let balanceOf = await randomApe.balanceOf(addr1.address);
       expect(balanceOf).to.be.equal("5");
@@ -107,18 +110,43 @@ describe("NounsToken Contract", function () {
         .connect(addr1)
         .setApprovalForAll(stakingSystem.address, true);
 
-      await stakingSystem.connect(addr1).stake(["1", "2", "3"]);
+      await stakingSystem.connect(addr1).stake(stakeTokenIds);
       let balanceOfStakingSystem = (
         await randomApe.balanceOf(stakingSystem.address)
       ).toString();
 
       expect(balanceOfStakingSystem).to.be.equal("3");
-      console.log("balanceOf", balanceOfStakingSystem);
+    });
+  });
+
+  describe("Get Staked NFTs", () => {
+    it("should be able to return all the staked NFTs", async () => {
+      let stakeTokenIds = ["1", "2", "3"];
+      await randomApe.mint(addr1.address, "5");
+      let balanceOf = await randomApe.balanceOf(addr1.address);
+      expect(balanceOf).to.be.equal("5");
+      let ownerOf = await randomApe.ownerOf("1");
+      expect(ownerOf).to.be.equal(addr1.address);
+      await randomApe
+        .connect(addr1)
+        .setApprovalForAll(stakingSystem.address, true);
+
+      await stakingSystem.connect(addr1).stake(stakeTokenIds);
+      let balanceOfStakingSystem = (
+        await randomApe.balanceOf(stakingSystem.address)
+      ).toString();
+
+      expect(balanceOfStakingSystem).to.be.equal("3");
+
+      let tokensOfOwner = await stakingSystem.tokensOfOwner(addr1.address);
+      // console.log("tokensOfOwner", tokensOfOwner);
     });
   });
 
   describe("Unstake staked NFTs ", () => {
     it("should be able to unstake staked nfts", async () => {
+      let stakeTokenIds = ["1", "2", "3"];
+      let unstakeTokenIds = ["1", "2"];
       await randomApe.mint(addr1.address, "5");
       let balanceOf = await randomApe.balanceOf(addr1.address);
       expect(balanceOf).to.be.equal("5");
@@ -136,7 +164,11 @@ describe("NounsToken Contract", function () {
       expect(beforeBalanceOfStakingSystem).to.be.equal("3");
       console.log("balanceOf", beforeBalanceOfStakingSystem);
 
-      await stakingSystem.connect(addr1).unstake(["1", "2", "3"]);
+      await stakingSystem.connect(addr1).unstake(unstakeTokenIds);
+
+      for (var i = 0; i < unstakeTokenIds.length; i++) {
+        let vault = await stakingSystem.vaults(addr1.address);
+      }
     });
   });
 });

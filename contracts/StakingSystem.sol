@@ -18,15 +18,13 @@ contract StakingSystem is IERC721Receiver, Ownable, ReentrancyGuard {
     struct Stake {
         uint256 tokenId;
         uint256 stakedAt;
-        address owner;
         uint256 released;
+        address owner;
+        bool nftStatus;
     }
 
     // mapping of tokenId to stake
     mapping(uint256 => Stake) public vaults;
-
-    // mapping of tokenId to StakingStatus
-    mapping(uint => bool) public nftStatus;
 
     event Staked(address owner, uint256 tokenId, uint256 value);
     event Unstaked(address owner, uint256 tokenId, uint256 value);
@@ -49,17 +47,6 @@ contract StakingSystem is IERC721Receiver, Ownable, ReentrancyGuard {
         _claim(msg.sender, tokenIds);
     }
 
-    function balanceOf(address account) external view returns (uint256) {
-        uint256 balance = 0;
-        uint256 supply = nft.totalSupply();
-        for (uint i = 1; i <= supply; i++) {
-            if (vaults[i].owner == account) {
-                balance += 1;
-            }
-        }
-        return balance;
-    }
-
     function _stake(address account, uint256[] calldata tokenIds) internal {
         uint256 tokenId;
         totalStaked += tokenIds.length;
@@ -78,18 +65,14 @@ contract StakingSystem is IERC721Receiver, Ownable, ReentrancyGuard {
             vault.owner = account;
             vault.tokenId = tokenId;
             vault.stakedAt = block.timestamp;
+            vault.nftStatus = true;
 
-            nftStatus[tokenId] = true;
-
-            nft.safeTransferFrom(account, address(this), tokenId);
+            nft.transferFrom(account, address(this), tokenId);
             emit Staked(account, tokenId, block.timestamp);
         }
     }
 
-    function _unstake(
-        address account,
-        uint256[] calldata tokenIds
-    ) internal nonReentrant {
+    function _unstake(address account, uint256[] calldata tokenIds) internal {
         uint256 tokenId;
         totalStaked -= tokenIds.length;
         for (uint i = 0; i < tokenIds.length; i++) {
@@ -103,10 +86,7 @@ contract StakingSystem is IERC721Receiver, Ownable, ReentrancyGuard {
         }
     }
 
-    function _claim(
-        address account,
-        uint256[] calldata tokenIds
-    ) internal nonReentrant {
+    function _claim(address account, uint256[] calldata tokenIds) internal {
         uint256 tokenId;
         uint256 earned = 0;
 
@@ -127,6 +107,38 @@ contract StakingSystem is IERC721Receiver, Ownable, ReentrancyGuard {
         }
 
         emit Claimed(account, earned);
+    }
+
+    function balanceOf(address account) public view returns (uint256) {
+        uint256 balance = 0;
+        uint256 supply = nft.totalSupply();
+        for (uint i = 1; i <= supply; i++) {
+            if (vaults[i].owner == account) {
+                balance += 1;
+            }
+        }
+        return balance;
+    }
+
+    function tokensOfOwner(
+        address account
+    ) public view returns (Stake[] memory) {
+        uint256 _totalSupply = nft.totalSupply();
+        uint256 _balanceOf = balanceOf(account);
+
+        uint currentIndex;
+
+        Stake[] memory stakedTokens = new Stake[](_balanceOf);
+
+        for (uint i = 1; i <= _totalSupply; i++) {
+            if (vaults[i].owner == account) {
+                Stake storage vault = vaults[i];
+                stakedTokens[i] = vault;
+                currentIndex++;
+            }
+        }
+
+        return stakedTokens;
     }
 
     function onERC721Received(
