@@ -147,28 +147,28 @@ describe("NounsToken Contract", function () {
     it("should be able to unstake staked nfts", async () => {
       let stakeTokenIds = ["1", "2", "3"];
       let unstakeTokenIds = ["1", "2"];
+
       await randomApe.mint(addr1.address, "5");
       let balanceOf = await randomApe.balanceOf(addr1.address);
       expect(balanceOf).to.be.equal("5");
+
       let ownerOf = await randomApe.ownerOf("1");
       expect(ownerOf).to.be.equal(addr1.address);
+
       await randomApe
         .connect(addr1)
         .setApprovalForAll(stakingSystem.address, true);
 
-      await stakingSystem.connect(addr1).stake(["1", "2", "3"]);
+      await rewardToken.connect(owner).addController(stakingSystem.address);
+
+      await stakingSystem.connect(addr1).stake(stakeTokenIds);
+
       let beforeBalanceOfStakingSystem = (
         await randomApe.balanceOf(stakingSystem.address)
       ).toString();
-
       expect(beforeBalanceOfStakingSystem).to.be.equal("3");
-      console.log("balanceOf", beforeBalanceOfStakingSystem);
 
       await stakingSystem.connect(addr1).unstake(unstakeTokenIds);
-
-      for (var i = 0; i < unstakeTokenIds.length; i++) {
-        let vault = await stakingSystem.vaults(addr1.address);
-      }
     });
   });
 });
