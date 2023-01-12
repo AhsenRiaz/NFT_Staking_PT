@@ -40,6 +40,7 @@ contract StakingSystem is IERC721Receiver, Ownable, ReentrancyGuard {
     }
 
     function unstake(uint256[] calldata tokenIds) external nonReentrant {
+        _claim(msg.sender, tokenIds);
         _unstake(msg.sender, tokenIds);
     }
 
@@ -111,8 +112,8 @@ contract StakingSystem is IERC721Receiver, Ownable, ReentrancyGuard {
 
     function balanceOf(address account) public view returns (uint256) {
         uint256 balance = 0;
-        uint256 supply = nft.totalSupply();
-        for (uint i = 1; i <= supply; i++) {
+        uint256 _totalSupply = nft.totalSupply();
+        for (uint i = 1; i <= _totalSupply; i++) {
             if (vaults[i].owner == account) {
                 balance += 1;
             }
@@ -132,8 +133,8 @@ contract StakingSystem is IERC721Receiver, Ownable, ReentrancyGuard {
 
         for (uint i = 1; i <= _totalSupply; i++) {
             if (vaults[i].owner == account) {
-                Stake storage vault = vaults[i];
-                stakedTokens[i] = vault;
+                Stake memory vault = vaults[i];
+                stakedTokens[currentIndex] = vault;
                 currentIndex++;
             }
         }

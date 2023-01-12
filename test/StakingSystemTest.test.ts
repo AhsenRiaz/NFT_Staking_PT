@@ -138,8 +138,8 @@ describe("NounsToken Contract", function () {
 
       expect(balanceOfStakingSystem).to.be.equal("3");
 
-      let tokensOfOwner = await stakingSystem.tokensOfOwner(addr1.address);
-      // console.log("tokensOfOwner", tokensOfOwner);
+      let stakedNFTs = await stakingSystem.tokensOfOwner(addr1.address);
+      expect(stakedNFTs.length).to.be.equal(3);
     });
   });
 
